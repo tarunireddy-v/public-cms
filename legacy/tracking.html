@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complaint Tracking - Smart Public</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        .tracking-header {
+            margin-bottom: 2rem;
+        }
+        .tracking-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .timeline-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            height: 100%;
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 2rem;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0.45rem;
+            top: 1.5rem;
+            bottom: -0.5rem;
+            width: 2px;
+            background-color: var(--border-color);
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 0.25rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: var(--border-color);
+            border: 2px solid white;
+            z-index: 10;
+        }
+        .timeline-dot.active {
+            background-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(33, 102, 105, 0.2);
+        }
+        .timeline-content {
+            font-size: 0.875rem;
+        }
+        .timeline-status {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+        .timeline-date {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .details-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        .detail-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+        .detail-value {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .evidence-box {
+            background-color: #1f2937;
+            height: 160px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .assigned-team {
+            background-color: rgba(33, 102, 105, 0.04);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .internal-log {
+            margin-top: 2rem;
+        }
+        .log-entry {
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+            border-left: 2px solid var(--border-color);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar" style="padding-left: 2rem; padding-right: 2rem;">
+        <div style="display: flex; align-items: center; gap: 4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--primary); font-size: 1.25rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect>
+                </svg>
+                Smart Public <span style="font-weight: 400; font-size: 0.875rem; color: var(--text-secondary); margin-left: -4px;">System</span>
+            </div>
+            
+            <div class="page-header" style="border:none; padding:0; background:none; font-size: 0.875rem;">
+                <a href="citizen-dashboard.html" style="text-decoration: none; color: var(--text-secondary); font-weight: 500; margin-right: 1.5rem;">Dashboard</a>
+                <a href="my-complaints.html" style="text-decoration: none; color: var(--primary); font-weight: 500; margin-right: 1.5rem;">Complaints</a>
+                <a href="#" style="text-decoration: none; color: var(--text-secondary); font-weight: 500;">Reports</a>
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="position: relative; width: 300px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 10px; color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="form-control" style="width: 100%; padding-left: 2.5rem; background-color: var(--bg-color); border: none;" placeholder="Search complaints, tracking IDs...">
+            </div>
+            <button class="btn btn-ghost" style="padding: 0.5rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></button>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">U</div>
+        </div>
+    </nav>
+
+    <main class="container py-8">
+        
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            <a href="citizen-dashboard.html" style="color: inherit; text-decoration: none;">Home</a> <span style="margin: 0 0.5rem;">/</span> 
+            <a href="citizen-dashboard.html" style="color: inherit; text-decoration: none;">My Complaints</a> <span style="margin: 0 0.5rem;">/</span> 
+            <span id="breadcrumbId">Tracking</span>
+        </div>
+
+        <div class="tracking-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <div style="background-color: var(--bg-color); color: var(--text-secondary); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; font-family: monospace; display: inline-block; margin-bottom: 0.75rem;" id="headerRef">REF-XXXXX</div>
+                <h1 id="headerTitle" style="font-size: 2.5rem; line-height: 1; margin-bottom: 0.5rem;">Loading Document...</h1>
+                <p style="color: var(--text-secondary);">Track the real-time resolution progress of your report.</p>
+            </div>
+            
+            <div class="tracking-actions">
+                <button class="btn btn-outline" style="background: white;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download PDF</button>
+                <button class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg> Share Status</button>
+            </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns: 300px 1fr; gap: 2rem;">
+            
+            <!-- Left col: Timeline -->
+            <div class="timeline-container">
+                <h3 style="margin-bottom: 2rem;">Current Progress</h3>
+                <div id="timelineList">
+                    <!-- Timeline Items injected here -->
+                </div>
+            </div>
+
+            <!-- Right col: Details -->
+            <div>
+                <div class="details-card">
+                    <h3 style="color: var(--primary); margin-bottom: 1.5rem; font-size: 1.125rem;">Complaint Details</h3>
+                    
+                    <div class="grid" style="grid-template-columns: 2fr 1.5fr; gap: 2rem; margin-bottom: 2rem;">
+                        <div>
+                            <div class="detail-label">Description</div>
+                            <p class="detail-value" style="color: var(--text-secondary); line-height: 1.6;" id="detailDesc"></p>
+                            
+                            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem;">
+                                <div>
+                                    <div class="detail-label">Category</div>
+                                    <div class="detail-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--primary);"></div>
+                                        <span id="detailCat"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="detail-label">Priority</div>
+                                    <div class="detail-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="width: 6px; height: 6px; border-radius: 50%; background-color: var(--status-error);" id="priorityDot"></div>
+                                        <span id="detailPriority"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 1.5rem;">
+                                <div class="detail-label">Location</div>
+                                <div class="detail-value" style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary); font-weight: 600;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                    <span id="detailLocation"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="detail-label">Evidence Attached</div>
+                            <div class="evidence-box">
+                                <span style="opacity: 0.5; font-size: 0.875rem;">No Image Uploaded</span>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;" id="evidenceDate"></div>
+                        </div>
+                    </div>
+
+                    <div class="assigned-team">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: white; color: var(--primary); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; font-size: 0.875rem;">Assigned Team</div>
+                                <div style="color: var(--text-secondary); font-size: 0.75rem;" id="teamName"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn btn-outline" style="background: white; padding: 0.5rem 1rem; font-size: 0.75rem;">Message Team</button>
+                            <button class="btn btn-ghost" style="font-size: 0.75rem;">View History</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="internal-log">
+                    <h4 style="font-size: 0.875rem; margin-bottom: 1rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em;">Internal Log</h4>
+                    <div id="internalLogsList">
+                        <!-- Logs injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/store.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const complaint = store.getComplaintById(id);
+            
+            if (!complaint) {
+                document.getElementById('headerTitle').textContent = "Complaint Not Found";
+                return;
+            }
+
+            // Populate header
+            document.title = `${complaint.id} - Tracking`;
+            document.getElementById('breadcrumbId').textContent = `Tracking ${complaint.id}`;
+            document.getElementById('headerRef').textContent = complaint.id;
+            document.getElementById('headerTitle').textContent = complaint.title;
+            
+            // Populate details
+            document.getElementById('detailDesc').textContent = complaint.description;
+            document.getElementById('detailCat').textContent = complaint.category;
+            document.getElementById('detailPriority').textContent = complaint.priority;
+            if(complaint.priority === 'High') {
+                document.getElementById('priorityDot').style.backgroundColor = 'var(--status-error)';
+            } else if(complaint.priority === 'Medium') {
+                document.getElementById('priorityDot').style.backgroundColor = 'var(--status-progress)';
+            } else {
+                document.getElementById('priorityDot').style.backgroundColor = 'var(--text-muted)';
+            }
+            document.getElementById('detailLocation').textContent = complaint.location;
+            document.getElementById('evidenceDate').textContent = `Uploaded on ${complaint.date}`;
+            document.getElementById('teamName').textContent = complaint.department;
+
+            // Timeline Map
+            const statusFlow = ['Submitted', 'Assigned', 'In Progress', 'Resolved'];
+            
+            // Build timeline items
+            const timelineHTML = statusFlow.map((status, index) => {
+                // Find if the timeline log exists for this status
+                const log = complaint.timeline.find(log => log.status === status);
+                
+                let isActive = false;
+                if(log) isActive = true; // Dot is green if this status has been reached
+                
+                // Active status check mapping
+                const currentStatusIndex = statusFlow.indexOf(complaint.status);
+                const isCurrent = (index === currentStatusIndex);
+                
+                return `
+                <div class="timeline-item">
+                    <div class="timeline-dot ${isActive ? 'active' : ''}"></div>
+                    <div class="timeline-content" style="${!isActive ? 'opacity: 0.4;' : ''}">
+                        <div class="timeline-status">${status}</div>
+                        ${log && log.date ? `<div class="timeline-date">${log.date}</div>` : ''}
+                        ${isCurrent && status !== 'Resolved' ? `<div style="display:inline-block; font-size: 0.65rem; background: rgba(245, 158, 11, 0.1); color: var(--status-progress); padding: 0.125rem 0.5rem; border-radius: 999px; font-weight: 700;">CURRENT</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            document.getElementById('timelineList').innerHTML = timelineHTML;
+
+            // Internal Logs
+            const validLogs = complaint.timeline.filter(log => log.note);
+            if (validLogs.length === 0) {
+                document.getElementById('internalLogsList').innerHTML = `<p style="font-size: 0.875rem; color: var(--text-muted);">No internal logs available yet.</p>`;
+            } else {
+                const logsHTML = validLogs.map(log => {
+                    return `
+                    <div class="log-entry">
+                        <strong style="color: var(--text-primary); font-weight: 600;">System Update</strong> <span style="opacity:0.5; font-size: 0.75rem; margin-left: 0.5rem;">${log.date}</span>
+                        <div style="margin-top: 0.25rem;">${log.note}</div>
+                    </div>`;
+                }).join('');
+                document.getElementById('internalLogsList').innerHTML = logsHTML;
+            }
+        });
+    </script>
+</body>
+</html>
