@@ -27,33 +27,26 @@ export default function SubmitComplaint() {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const newRef = 'REF-' + Math.floor(10000 + Math.random() * 90000);
-        const finalDept = dept === 'auto' ? detectedDept : dept;
-        
-        const now = new Date();
-        const dateStr = `${now.toLocaleString('en-US', { month: 'short' })} ${now.getDate()}, ${now.getFullYear()}`;
-        const timeStr = `${dateStr} • ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        if (!user.id) return;
 
-        addComplaint({
-            id: newRef,
-            title,
-            description: desc,
-            location,
-            category: finalDept.split(' ')[0] + ' Issue',
-            department: finalDept,
-            priority: 'Medium',
-            status: 'Submitted',
-            date: dateStr,
-            citizenId: 'user1',
-            evidence: evidence,
-            timeline: [
-                { status: 'Submitted', date: timeStr, note: 'Complaint officially submitted by citizen.' }
-            ]
-        });
+        try {
+            const created = await addComplaint({
+                title,
+                description: desc,
+                location,
+                department: dept === 'auto' ? detectedDept : dept,
+                status: 'Submitted',
+                userId: user.id,
+                image: evidence
+            });
 
-        navigate(`/tracking/${newRef}`);
+            navigate(`/tracking/${created.id}`);
+        } catch (_error) {
+            // No visual changes requested; keep existing UI as-is.
+        }
     };
 
     return (

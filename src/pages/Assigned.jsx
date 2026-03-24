@@ -5,8 +5,10 @@ import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
 export default function Assigned() {
-    const { getComplaintsByDepartment, updateComplaintStatus } = useComplaints();
-    const complaints = getComplaintsByDepartment('Electricity Department').filter(c => c.status !== 'Resolved');
+    const { getComplaintsByDepartment, updateComplaintStatus, filterComplaintsBySearch } = useComplaints();
+    const complaints = filterComplaintsBySearch(
+        getComplaintsByDepartment('Electricity').filter((c) => c.status !== 'Resolved')
+    );
     
     const handleUpdate = (id, newStatus, newPriority, note) => {
         updateComplaintStatus(id, newStatus, newPriority, note);

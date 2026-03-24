@@ -1,4 +1,5 @@
 import React from 'react';
+import { jsPDF } from 'jspdf';
 import Layout from '../components/Layout';
 import { citizenLinks } from './CitizenDashboard';
 import { officerLinks, officerUser } from './OfficerDashboard';
@@ -33,6 +34,38 @@ export default function Tracking({ role = 'citizen' }) {
         breadcrumbHome = "/admin";
     }
 
+    const handleDownloadPdf = () => {
+        const doc = new jsPDF();
+        let y = 14;
+        const dept = complaint.department || complaint.category || '';
+        doc.setFontSize(12);
+        doc.text(`Complaint ID: ${complaint.id}`, 10, y);
+        y += 8;
+        doc.text(`Title: ${complaint.title}`, 10, y);
+        y += 8;
+        doc.text('Description:', 10, y);
+        y += 6;
+        const descLines = doc.splitTextToSize(String(complaint.description || ''), 190);
+        doc.text(descLines, 10, y);
+        y += descLines.length * 5 + 6;
+        doc.text(`Department: ${dept}`, 10, y);
+        y += 8;
+        doc.text(`Status: ${complaint.status}`, 10, y);
+        y += 8;
+        doc.text(`Location: ${complaint.location}`, 10, y);
+        doc.save(`complaint-${String(complaint.id).slice(-8)}.pdf`);
+    };
+
+    const handleShareStatus = async () => {
+        const dept = complaint.department || complaint.category || '';
+        const text = `Complaint ID: ${complaint.id} | Status: ${complaint.status} | Dept: ${dept}`;
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (_err) {
+            window.prompt('Copy this text:', text);
+        }
+    };
+
     return (
         <Layout links={links} user={user} mainStyle={mainStyle}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
@@ -54,8 +87,8 @@ export default function Tracking({ role = 'citizen' }) {
                     <p style={{ color: 'var(--text-secondary)' }}>Track the real-time resolution progress of your report.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button className="btn btn-outline" style={{ background: 'white' }}>Download PDF</button>
-                    <button className="btn btn-primary">Share Status</button>
+                    <button type="button" className="btn btn-outline" style={{ background: 'white' }} onClick={handleDownloadPdf}>Download PDF</button>
+                    <button type="button" className="btn btn-primary" onClick={handleShareStatus}>Share Status</button>
                 </div>
             </div>
 

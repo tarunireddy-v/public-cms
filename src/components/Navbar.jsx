@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useComplaints } from '../context/ComplaintContext';
 
 export default function Navbar({ user }) {
+  const { searchQuery, setSearchQuery } = useComplaints();
+
   return (
     <nav className="navbar" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flex: 1 }}>
@@ -16,7 +19,7 @@ export default function Navbar({ user }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <div style={{ position: 'relative', width: '300px', maxWidth: '100%' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" className="form-control" style={{ width: '100%', paddingLeft: '2.5rem', backgroundColor: 'var(--bg-color)', border: 'none' }} placeholder="Search complaints, tracking IDs..." />
+                <input type="text" className="form-control" style={{ width: '100%', paddingLeft: '2.5rem', backgroundColor: 'var(--bg-color)', border: 'none' }} placeholder="Search complaints, tracking IDs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
 
             <button className="btn btn-ghost" style={{ padding: '0.5rem', position: 'relative' }}>

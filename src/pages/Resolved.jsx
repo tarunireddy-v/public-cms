@@ -5,8 +5,10 @@ import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
 export default function Resolved() {
-    const { getComplaintsByDepartment } = useComplaints();
-    const resolved = getComplaintsByDepartment('Electricity Department').filter(c => c.status === 'Resolved');
+    const { getComplaintsByDepartment, filterComplaintsBySearch } = useComplaints();
+    const resolved = filterComplaintsBySearch(
+        getComplaintsByDepartment('Electricity').filter((c) => c.status === 'Resolved')
+    );
 
     return (
         <Layout links={officerLinks} user={officerUser} mainStyle={{ padding: '2rem 3rem' }}>

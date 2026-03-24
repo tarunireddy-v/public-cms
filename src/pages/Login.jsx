@@ -1,18 +1,31 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { api } from '../utils/api';
 
 export default function Login() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('name@agency.gov');
     const [password, setPassword] = useState('password');
     const [role, setRole] = useState('Citizen');
+    const [error, setError] = useState('');
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         if(e) e.preventDefault();
-        
-        if (role === 'Citizen') navigate('/dashboard');
-        else if (role === 'Department Officer') navigate('/officer');
-        else if (role === 'Admin') navigate('/admin');
+        setError('');
+
+        try {
+            const response = await api.login({ email: username, password });
+            localStorage.setItem('token', response.token);
+            localStorage.setItem('user', JSON.stringify(response.user));
+
+            const backendRole = response.user?.role;
+            if (backendRole === 'Citizen') navigate('/dashboard');
+            else if (backendRole === 'Officer') navigate('/officer');
+            else if (backendRole === 'Admin') navigate('/admin');
+            else navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed');
+        }
     };
 
     return (
@@ -81,6 +94,9 @@ export default function Login() {
                         </div>
 
                         <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', fontSize: '1rem' }}>Login to Portal →</button>
+                        {error && (
+                            <p style={{ marginTop: '0.75rem', color: 'var(--status-error)', fontSize: '0.875rem' }}>{error}</p>
+                        )}
                     </form>
 
                     <div style={{ marginTop: '2rem', textAlign: 'center', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>

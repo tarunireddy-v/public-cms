@@ -3,6 +3,28 @@ import Layout from '../components/Layout';
 import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
+const OFFICER_DEPARTMENT = 'Electricity';
+
+function downloadComplaintsCsv(complaintRows) {
+    const header = 'ID,Title,Department,Status,Date';
+    const lines = complaintRows.map((c) => {
+        const cells = [c.id, c.title, c.department, c.status, c.date].map((cell) => {
+            const s = String(cell ?? '');
+            if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+            return s;
+        });
+        return cells.join(',');
+    });
+    const csv = [header, ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'complaints-export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 export const officerLinks = [
     { path: '/officer', label: 'Dashboard', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> },
     { path: '/officer/assigned', label: 'Assigned', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> },
@@ -13,12 +35,16 @@ export const officerLinks = [
 export const officerUser = { name: 'Officer Wilson', idText: 'Dept: Electricity', avatar: 'https://ui-avatars.com/api/?name=Officer+Wilson&background=216669&color=fff' };
 
 export default function OfficerDashboard() {
-    const { getComplaintsByDepartment } = useComplaints();
-    const allComplaints = getComplaintsByDepartment('Electricity Department');
+    const { getComplaintsByDepartment, filterComplaintsBySearch } = useComplaints();
+    const deptComplaints = filterComplaintsBySearch(getComplaintsByDepartment(OFFICER_DEPARTMENT));
     
-    const pending = allComplaints.filter(c => c.status === 'Submitted' || c.status === 'Assigned');
-    const inProgress = allComplaints.filter(c => c.status === 'In Progress');
+    const pending = deptComplaints.filter(c => c.status === 'Submitted' || c.status === 'Assigned');
+    const inProgress = deptComplaints.filter(c => c.status === 'In Progress');
     const highPriority = [...pending, ...inProgress].filter(c => c.priority === 'High');
+
+    const handleExportCsv = () => {
+        downloadComplaintsCsv([...pending, ...inProgress]);
+    };
 
     return (
         <Layout links={officerLinks} user={officerUser} mainStyle={{ padding: '2rem 3rem' }}>
@@ -64,7 +90,7 @@ export default function OfficerDashboard() {
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>Active Records</h3>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button className="btn btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', backgroundColor: 'white' }}>Filter By Date</button>
-                        <button className="btn btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', backgroundColor: 'white' }}>Export CSV</button>
+                        <button type="button" className="btn btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', backgroundColor: 'white' }} onClick={handleExportCsv}>Export CSV</button>
                     </div>
                 </div>
                 <div style={{ margin: '-2rem', marginTop: '0' }}>

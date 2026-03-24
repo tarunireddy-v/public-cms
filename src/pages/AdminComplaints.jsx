@@ -5,13 +5,12 @@ import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
 export default function AdminComplaints() {
-    const { complaints } = useComplaints();
+    const { complaints, filterComplaintsBySearch, searchQuery, setSearchQuery } = useComplaints();
     const [filter, setFilter] = useState('All');
-    const [search, setSearch] = useState('');
 
-    const filtered = complaints.filter(c => {
+    const searched = filterComplaintsBySearch(complaints);
+    const filtered = searched.filter((c) => {
         if (filter !== 'All' && c.status !== filter) return false;
-        if (search && !c.id.toLowerCase().includes(search.toLowerCase()) && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
         return true;
     });
 
@@ -30,8 +29,8 @@ export default function AdminComplaints() {
                     placeholder="Search by ID or Title..." 
                     className="form-control" 
                     style={{ flex: 1 }}
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <select className="form-control" value={filter} onChange={e => setFilter(e.target.value)} style={{ width: '200px' }}>
                     <option value="All">All Statuses</option>

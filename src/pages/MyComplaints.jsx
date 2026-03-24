@@ -5,8 +5,9 @@ import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
 export default function MyComplaints() {
-    const { getComplaintsByUser } = useComplaints();
-    const complaints = getComplaintsByUser('user1');
+    const { getComplaintsByUser, filterComplaintsBySearch } = useComplaints();
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const complaints = filterComplaintsBySearch(getComplaintsByUser(currentUser.id || ''));
 
     return (
         <Layout links={citizenLinks}>
