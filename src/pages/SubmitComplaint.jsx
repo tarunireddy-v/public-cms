@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Layout from '../components/Layout';
 import { citizenLinks } from './CitizenDashboard';
 import { useComplaints } from '../context/ComplaintContext';
@@ -24,10 +24,15 @@ export default function SubmitComplaint() {
 
     // Department selection
     const departments = classifier.departments;
-    const [department, setDepartment] = useState(departments[0] || '');
+    const departmentOptions = departments.includes('General')
+        ? departments
+        : [...departments, 'General'];
+    const [department, setDepartment] = useState('General');
     const [autoDepartment, setAutoDepartment] = useState('General');
     const [isDeptManuallySet, setIsDeptManuallySet] = useState(false);
     const [isDeptLoading, setIsDeptLoading] = useState(false);
+    const aiDebounceRef = useRef(null);
+    const lastClassifiedTextRef = useRef('');
 
     // Location details
     const [street, setStreet] = useState('');
@@ -77,29 +82,39 @@ export default function SubmitComplaint() {
 
     // Auto-detect department via backend AI (debounced)
     useEffect(() => {
-        const text = `${title} ${desc}`.trim();
-        if (!text || text.length < 10) {
-            // Too short to classify; keep or reset to General suggestion
+        const text = desc.trim().length > 5
+            ? desc.trim()
+            : `${title} ${desc}`.trim();
+        if (text.length < 15) {
             setAutoDepartment('General');
             setIsDeptLoading(false);
+            return;
+        }
+
+        if (text === lastClassifiedTextRef.current) {
             return;
         }
 
         let cancelled = false;
         setIsDeptLoading(true);
 
-        const handle = setTimeout(async () => {
+        if (aiDebounceRef.current) {
+            clearTimeout(aiDebounceRef.current);
+        }
+
+        aiDebounceRef.current = setTimeout(async () => {
             try {
                 console.log('Calling AI with:', text);
                 const response = await api.predictDepartment(text);
                 console.log('AI response:', response);
                 if (cancelled) return;
                 const predicted = response?.department || 'General';
+                lastClassifiedTextRef.current = text;
                 setAutoDepartment(predicted);
                 if (!isDeptManuallySet) {
-                    const safeDepartment = departments.includes(predicted)
+                    const safeDepartment = departmentOptions.includes(predicted)
                         ? predicted
-                        : (departments[0] || '');
+                        : 'General';
                     setDepartment(safeDepartment);
                 }
             } catch (_error) {
@@ -109,14 +124,16 @@ export default function SubmitComplaint() {
                     setIsDeptLoading(false);
                 }
             }
-        }, 500);
+        }, 1800);
 
         return () => {
             cancelled = true;
-            clearTimeout(handle);
+            if (aiDebounceRef.current) {
+                clearTimeout(aiDebounceRef.current);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [title, desc, isDeptManuallySet, departments]);
+    }, [title, desc, isDeptManuallySet, departmentOptions]);
 
     const handleDeptChange = (e) => {
         const value = e.target.value;
@@ -342,7 +359,7 @@ export default function SubmitComplaint() {
                                         Detecting...
                                     </option>
                                 )}
-                                {departments.map((d) => (
+                                {departmentOptions.map((d) => (
                                     <option key={d} value={d}>
                                         {d}
                                     </option>
