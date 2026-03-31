@@ -2,6 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
+    const departments = [
+        "Electricity",
+        "Water",
+        "Sanitation",
+        "Roads",
+        "Public Safety",
+        "Animal Control",
+        "Noise & Public Disturbance",
+        "Drainage & Sewage"
+    ];
+
     return (
         <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh' }}>
             <nav className="navbar" style={{ paddingLeft: '2rem', paddingRight: '2rem' }}>
@@ -76,23 +87,12 @@ export default function Landing() {
                         <h2 style={{ fontSize: '2rem', marginTop: '0.5rem' }}>Connected Departments</h2>
                     </div>
 
-                    <div className="departments-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1.5rem', marginBottom: '5rem' }}>
-                        <div className="dept-card" style={{ background: 'white', padding: '2rem 1rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ color: 'var(--primary)' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg></div>
-                            Electricity
-                        </div>
-                        <div className="dept-card" style={{ background: 'white', padding: '2rem 1rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ color: 'var(--primary)' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg></div>
-                            Water
-                        </div>
-                        <div className="dept-card" style={{ background: 'white', padding: '2rem 1rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ color: 'var(--primary)' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
-                            Sanitation
-                        </div>
-                        <div className="dept-card" style={{ background: 'white', padding: '2rem 1rem', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ color: 'var(--primary)' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8 4v-2m-4 2v-2"></path></svg></div>
-                            Roads
-                        </div>
+                    <div className="dept-container" style={{ marginBottom: '5rem' }}>
+                        {departments.map((dept, i) => (
+                            <div key={i} className="dept-card">
+                                {dept}
+                            </div>
+                        ))}
                     </div>
 
                     <div className="cta-section" style={{ backgroundColor: 'var(--primary)', color: 'white', padding: '5rem 2rem', textAlign: 'center', borderRadius: 'var(--radius-lg)', marginBottom: '4rem' }}>

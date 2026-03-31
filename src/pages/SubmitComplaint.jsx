@@ -1,20 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { citizenLinks } from './CitizenDashboard';
 import { useComplaints } from '../context/ComplaintContext';
 import classifier from '../utils/classifier';
+import { api } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 
 export default function SubmitComplaint() {
     const { addComplaint } = useComplaints();
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const storedUser = JSON.parse(localStorage.getItem("user"));
+        if (storedUser) {
+            setUser(storedUser);
+        }
+    }, []);
+
+    // Basic info
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
-    const [dept, setDept] = useState('auto');
-    const [location, setLocation] = useState('');
+
+    // Department selection
+    const departments = classifier.departments;
+    const [department, setDepartment] = useState(departments[0] || '');
+    const [autoDepartment, setAutoDepartment] = useState('General');
+    const [isDeptManuallySet, setIsDeptManuallySet] = useState(false);
+    const [isDeptLoading, setIsDeptLoading] = useState(false);
+
+    // Location details
+    const [street, setStreet] = useState('');
+    const [area, setArea] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [pincode, setPincode] = useState('');
+    const [isLocLoading, setIsLocLoading] = useState(false);
+    const [locError, setLocError] = useState('');
+
+    // Evidence
     const [evidence, setEvidence] = useState(null);
 
-    const detectedDept = classifier.classify(title, desc);
+    // Validation state
+    const [touched, setTouched] = useState({
+        title: false,
+        desc: false,
+        pincode: false,
+    });
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -27,17 +59,171 @@ export default function SubmitComplaint() {
         }
     };
 
+    // Derived validations
+    const titleValid = title.trim().length >= 5;
+    const descValid = desc.trim().length >= 15;
+    const pincodeValid = /^\d{6}$/.test(pincode.trim());
+
+    const titleError = !titleValid ? 'Title must be at least 5 characters.' : '';
+    const descError = !descValid ? 'Description must be at least 15 characters.' : '';
+    const pincodeError = !pincodeValid ? 'Pincode must be a 6‑digit number.' : '';
+
+    const isFormValid =
+        titleValid &&
+        descValid &&
+        pincodeValid &&
+        !!city.trim() &&
+        !!state.trim();
+
+    // Auto-detect department via backend AI (debounced)
+    useEffect(() => {
+        const text = `${title} ${desc}`.trim();
+        if (!text || text.length < 10) {
+            // Too short to classify; keep or reset to General suggestion
+            setAutoDepartment('General');
+            setIsDeptLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setIsDeptLoading(true);
+
+        const handle = setTimeout(async () => {
+            try {
+                console.log('Calling AI with:', text);
+                const response = await api.predictDepartment(text);
+                console.log('AI response:', response);
+                if (cancelled) return;
+                const predicted = response?.department || 'General';
+                setAutoDepartment(predicted);
+                if (!isDeptManuallySet) {
+                    const safeDepartment = departments.includes(predicted)
+                        ? predicted
+                        : (departments[0] || '');
+                    setDepartment(safeDepartment);
+                }
+            } catch (_error) {
+                // If API fails, keep previous autoDept and selection
+            } finally {
+                if (!cancelled) {
+                    setIsDeptLoading(false);
+                }
+            }
+        }, 500);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(handle);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [title, desc, isDeptManuallySet, departments]);
+
+    const handleDeptChange = (e) => {
+        const value = e.target.value;
+        setDepartment(value);
+        setIsDeptManuallySet(true);
+    };
+
+    const handleUseCurrentLocation = async () => {
+        setLocError('');
+        if (!navigator.geolocation) {
+            setLocError('Geolocation is not supported in this browser.');
+            return;
+        }
+
+        setIsLocLoading(true);
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords;
+                    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`;
+                    const res = await fetch(url, {
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                    });
+                    const data = await res.json();
+                    const addr = data.address || {};
+
+                    const parsedAddress = {
+                        street:
+                            addr.road ||
+                            addr.neighbourhood ||
+                            '',
+                        area:
+                            addr.suburb ||
+                            addr.neighbourhood ||
+                            addr.village ||
+                            addr.hamlet ||
+                            '',
+                        city:
+                            addr.city ||
+                            addr.town ||
+                            addr.municipality ||
+                            addr.county ||
+                            '',
+                        state: addr.state || '',
+                        pincode: addr.postcode || '',
+                        fullAddress: data.display_name || ''
+                    };
+
+                    console.log('RAW ADDRESS:', addr);
+                    console.log('PARSED:', parsedAddress);
+
+                    // Only overwrite fields when we have a non-empty new value
+                    if (parsedAddress.street) {
+                        setStreet((prev) => prev || parsedAddress.street);
+                    }
+                    if (parsedAddress.area) {
+                        setArea((prev) => prev || parsedAddress.area);
+                    }
+                    if (parsedAddress.city) {
+                        setCity((prev) => prev || parsedAddress.city);
+                    }
+                    if (parsedAddress.state) {
+                        setState((prev) => prev || parsedAddress.state);
+                    }
+                    if (parsedAddress.pincode) {
+                        setPincode((prev) => prev || parsedAddress.pincode);
+                    }
+                } catch (_error) {
+                    setLocError('Unable to fetch address from your location. Please enter it manually.');
+                } finally {
+                    setIsLocLoading(false);
+                }
+            },
+            (error) => {
+                if (error.code === error.PERMISSION_DENIED) {
+                    setLocError('Location permission denied. Please enter address manually.');
+                } else {
+                    setLocError('Unable to access your location. Please enter address manually.');
+                }
+                setIsLocLoading(false);
+            }
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
         if (!user.id) return;
+        if (!isFormValid) return;
+
+        const addressParts = [
+            street.trim(),
+            area.trim(),
+            city.trim(),
+            state.trim(),
+            pincode.trim(),
+        ].filter(Boolean);
+
+        const combinedLocation = addressParts.join(', ');
 
         try {
             const created = await addComplaint({
                 title,
                 description: desc,
-                location,
-                department: dept === 'auto' ? detectedDept : dept,
+                location: combinedLocation,
+                department,
                 status: 'Submitted',
                 userId: user.id,
                 image: evidence
@@ -49,9 +235,16 @@ export default function SubmitComplaint() {
         }
     };
 
+    const inputBorderStyle = (fieldValid, fieldTouched) => {
+        if (!fieldTouched) return {};
+        return {
+            borderColor: fieldValid ? 'var(--status-resolved)' : 'var(--status-error)',
+        };
+    };
+
     return (
-        <Layout links={citizenLinks} mainStyle={{ padding: 0 }}>
-            <div className="submit-container" style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1.5rem' }}>
+        <Layout links={citizenLinks} user={user} mainStyle={{ padding: 0 }}>
+            <div className="submit-container form-container" style={{ margin: '2rem auto', padding: '0 1.5rem' }}>
                 <div className="header-card" style={{ backgroundColor: 'rgba(33, 102, 105, 0.04)', borderRadius: 'var(--radius-lg)', padding: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                     <div>
                         <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Submit New Complaint</h1>
@@ -60,6 +253,36 @@ export default function SubmitComplaint() {
                 </div>
 
                 <form onSubmit={handleSubmit} style={{ backgroundColor: 'var(--surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', padding: '2.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                    {/* User Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--primary)', marginRight: '0.75rem' }}></div>
+                        User Info
+                    </div>
+
+                    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">Name</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={user?.name || ""}
+                                readOnly
+                                style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Email</label>
+                            <input
+                                type="email"
+                                className="form-control"
+                                value={user?.email || ""}
+                                readOnly
+                                style={{ backgroundColor: 'var(--bg-color)', cursor: 'not-allowed' }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Basic Info */}
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--primary)', marginRight: '0.75rem' }}></div>
                         Basic Information
@@ -67,33 +290,150 @@ export default function SubmitComplaint() {
                     
                     <div className="form-group">
                         <label className="form-label">Complaint Title</label>
-                        <input type="text" className="form-control" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Pothole on Maple Street" required />
+                        <input
+                            type="text"
+                            className="form-control"
+                            value={title}
+                            onChange={e => setTitle(e.target.value)}
+                            onBlur={() => setTouched(prev => ({ ...prev, title: true }))}
+                            placeholder="e.g., Pothole on Maple Street"
+                            style={inputBorderStyle(titleValid, touched.title)}
+                        />
+                        {touched.title && !titleValid && (
+                            <div style={{ color: 'var(--status-error)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{titleError}</div>
+                        )}
                     </div>
                     
                     <div className="form-group">
                         <label className="form-label">Detailed Description</label>
-                        <textarea className="form-control" value={desc} onChange={e => setDesc(e.target.value)} placeholder="Describe the issue in detail..." required></textarea>
+                        <textarea
+                            className="form-control"
+                            value={desc}
+                            onChange={e => setDesc(e.target.value)}
+                            onBlur={() => setTouched(prev => ({ ...prev, desc: true }))}
+                            placeholder="Describe the issue clearly. Include location, severity, landmarks"
+                            style={{
+                                minHeight: '140px',
+                                ...inputBorderStyle(descValid, touched.desc),
+                            }}
+                        ></textarea>
+                        {touched.desc && !descValid && (
+                            <div style={{ color: 'var(--status-error)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{descError}</div>
+                        )}
                     </div>
 
+                    {/* Complaint Details & Department */}
                     <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--primary)', marginRight: '0.75rem' }}></div>
-                        Categorization & Location
+                        Complaint Details & Department
                     </div>
 
                     <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                         <div className="form-group">
-                            <label className="form-label">Target Department</label>
-                            <select className="form-control" value={dept} onChange={e => setDept(e.target.value)}>
-                                <option value="auto">Auto-detecting: {detectedDept}</option>
-                                {classifier.departments.map(d => <option key={d} value={d}>{d}</option>)}
+                            <label className="form-label">
+                                Department{' '}
+                                <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>
+                                    (Auto-detected{autoDepartment ? `: ${autoDepartment}` : ''})
+                                </span>
+                            </label>
+                            <select className="form-control" value={department} onChange={handleDeptChange}>
+                                {isDeptLoading && (
+                                    <option value={department} disabled>
+                                        Detecting...
+                                    </option>
+                                )}
+                                {departments.map((d) => (
+                                    <option key={d} value={d}>
+                                        {d}
+                                    </option>
+                                ))}
                             </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Precise Location</label>
-                            <input type="text" className="form-control" value={location} onChange={e => setLocation(e.target.value)} placeholder="Search address..." required />
                         </div>
                     </div>
 
+                    {/* Location Details */}
+                    <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--primary)', marginRight: '0.75rem' }}></div>
+                        Location Details
+                    </div>
+
+                    <div className="grid" style={{ gridTemplateColumns: '2fr 1.5fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">Street Address</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={street}
+                                onChange={e => setStreet(e.target.value)}
+                                placeholder="House / street"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Area / Locality</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={area}
+                                onChange={e => setArea(e.target.value)}
+                                placeholder="Area, locality, or neighbourhood"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="container-location-row" style={{ marginBottom: '0.75rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">City</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={city}
+                                onChange={e => setCity(e.target.value)}
+                                placeholder="City"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">State</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={state}
+                                onChange={e => setState(e.target.value)}
+                                placeholder="State"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Pincode</label>
+                            <input
+                                type="text"
+                                className="form-control"
+                                value={pincode}
+                                onChange={e => setPincode(e.target.value)}
+                                onBlur={() => setTouched(prev => ({ ...prev, pincode: true }))}
+                                placeholder="6-digit code"
+                                style={inputBorderStyle(pincodeValid, touched.pincode)}
+                            />
+                            {touched.pincode && !pincodeValid && (
+                                <div style={{ color: 'var(--status-error)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{pincodeError}</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <button
+                            type="button"
+                            className="btn btn-outline"
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.75rem', backgroundColor: 'white' }}
+                            onClick={handleUseCurrentLocation}
+                            disabled={isLocLoading}
+                        >
+                            {isLocLoading ? 'Detecting location…' : 'Use Current Location'}
+                        </button>
+                        {locError && (
+                            <div style={{ color: 'var(--status-error)', fontSize: '0.75rem' }}>{locError}</div>
+                        )}
+                    </div>
+
+                    {/* Evidence */}
                     <div style={{ display: 'flex', alignItems: 'center', margin: '2rem 0 1.5rem', fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                         <div style={{ width: '24px', height: '1px', backgroundColor: 'var(--primary)', marginRight: '0.75rem' }}></div>
                         Evidence
@@ -127,7 +467,14 @@ export default function SubmitComplaint() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '2rem', marginTop: '2rem' }}>
                         <button type="button" onClick={() => navigate('/dashboard')} className="btn btn-ghost" style={{ fontWeight: 700 }}>CANCEL</button>
-                        <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem 1.5rem' }}>SUBMIT COMPLAINT</button>
+                        <button
+                            type="submit"
+                            className="btn btn-primary"
+                            style={{ padding: '0.75rem 1.5rem', opacity: isFormValid ? 1 : 0.5, cursor: isFormValid ? 'pointer' : 'not-allowed' }}
+                            disabled={!isFormValid}
+                        >
+                            SUBMIT COMPLAINT
+                        </button>
                     </div>
                 </form>
             </div>

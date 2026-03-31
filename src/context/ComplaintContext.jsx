@@ -9,21 +9,6 @@ export const ComplaintProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        const fetchComplaints = async () => {
-            try {
-                const response = await api.getComplaints();
-                setComplaints(response.map(mapComplaint));
-            } catch (_error) {
-                setComplaints([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchComplaints();
-    }, []);
-
     const mapComplaint = (item) => {
         const createdDate = item.createdAt ? new Date(item.createdAt) : new Date();
         const dateStr = `${createdDate.toLocaleString('en-US', { month: 'short' })} ${createdDate.getDate()}, ${createdDate.getFullYear()}`;
@@ -34,6 +19,8 @@ export const ComplaintProvider = ({ children }) => {
             id: item._id,
             category: item.department,
             priority: item.priority || 'Medium',
+            createdAt: item.createdAt || new Date().toISOString(),
+            remarks: item.remarks || '',
             date: dateStr,
             citizenId: String(item.userId),
             evidence: item.image || null,
@@ -43,6 +30,21 @@ export const ComplaintProvider = ({ children }) => {
         };
     };
 
+    const fetchComplaints = useCallback(async () => {
+        try {
+            const response = await api.getComplaints();
+            setComplaints(response.map(mapComplaint));
+        } catch (_error) {
+            setComplaints([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchComplaints();
+    }, [fetchComplaints]);
+
     const addComplaint = async (complaintPayload) => {
         const response = await api.createComplaint(complaintPayload);
         const complaint = mapComplaint(response.complaint);
@@ -50,9 +52,14 @@ export const ComplaintProvider = ({ children }) => {
         return complaint;
     };
 
-    const updateComplaintStatus = async (id, newStatus, _newPriority, _note) => {
-        const response = await api.updateComplaintStatus(id, newStatus);
-        const updatedComplaint = mapComplaint(response.complaint);
+    const updateComplaintStatus = async (id, newStatus, newPriority, note) => {
+        const response = await api.updateComplaint(id, {
+            status: newStatus,
+            priority: newPriority,
+            remarks: note,
+        });
+        console.log("Update response:", response);
+        const updatedComplaint = mapComplaint(response);
         setComplaints(prev => prev.map(c => (c.id === id ? { ...c, ...updatedComplaint } : c)));
     };
 
@@ -73,6 +80,7 @@ export const ComplaintProvider = ({ children }) => {
             setSearchQuery,
             filterComplaintsBySearch,
             addComplaint,
+            fetchComplaints,
             updateComplaintStatus,
             getComplaintById,
             getComplaintsByDepartment,

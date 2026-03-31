@@ -13,7 +13,11 @@ const citizenLinks = [
 
 export default function CitizenDashboard() {
     const { getComplaintsByUser, filterComplaintsBySearch } = useComplaints();
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!currentUser) {
+        window.location.href = '/login';
+        return null;
+    }
     const userComplaints = getComplaintsByUser(currentUser.id || '');
     const allComplaints = filterComplaintsBySearch(userComplaints);
     
@@ -26,10 +30,12 @@ export default function CitizenDashboard() {
     const IconResolved = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
 
     return (
-        <Layout links={citizenLinks}>
+        <Layout links={citizenLinks} user={currentUser}>
             <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
                 <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Citizen Dashboard</h1>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Welcome back, Marcus. Here's what's happening in your neighborhood.</p>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
+                    Welcome back {currentUser?.name || 'User'}. Here's what's happening in your neighborhood.
+                </p>
 
                 <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
                     <DashboardStatCard title="Total Complaints" value={total} badgeText="+12%" badgeBg="rgba(16, 185, 129, 0.1)" badgeColor="var(--status-resolved)" icon={IconTotal} />

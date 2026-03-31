@@ -11,8 +11,6 @@ export const adminLinks = [
     { path: '/admin/reports', label: 'Reports', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> }
 ];
 
-export const adminUser = { name: 'Alex Rivera', idText: 'System Admin', avatar: 'https://ui-avatars.com/api/?name=Alex+Rivera&background=216669&color=fff' };
-
 const dataMap = [
     { name: 'WEEK 1', received: 400, resolved: 240 },
     { name: 'WEEK 2', received: 300, resolved: 139 },
@@ -21,6 +19,11 @@ const dataMap = [
 ];
 
 export default function AdminDashboard() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+        window.location.href = '/login';
+        return null;
+    }
     const { complaints } = useComplaints();
     
     // Instead of computing derived data matching exactly 2,845 since the db is mocked, we will mock the numbers to match the screenshot precisely for visual demonstration
@@ -30,7 +33,7 @@ export default function AdminDashboard() {
     const avgResponse = '1.8 Days';
 
     return (
-        <Layout links={adminLinks} user={adminUser} mainStyle={{ padding: '2rem 3rem' }}>
+        <Layout links={adminLinks} user={user} mainStyle={{ padding: '2rem 3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>Dashboard Overview</h1>

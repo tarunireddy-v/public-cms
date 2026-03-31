@@ -4,6 +4,7 @@ import { ComplaintProvider } from './context/ComplaintContext';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 import CitizenDashboard from './pages/CitizenDashboard';
 import MyComplaints from './pages/MyComplaints';
@@ -27,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           
           <Route path="/dashboard" element={<CitizenDashboard />} />
           <Route path="/my-complaints" element={<MyComplaints />} />
@@ -34,12 +36,14 @@ function App() {
           <Route path="/tracking/:id" element={<Tracking role="citizen" />} />
 
           <Route path="/officer" element={<OfficerDashboard />} />
+          <Route path="/officer-dashboard" element={<OfficerDashboard />} />
           <Route path="/officer/assigned" element={<Assigned />} />
           <Route path="/officer/resolved" element={<Resolved />} />
           <Route path="/officer/analytics" element={<OfficerAnalytics />} />
           <Route path="/officer/tracking/:id" element={<Tracking role="officer" />} />
 
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin/complaints" element={<AdminComplaints />} />
           <Route path="/admin/departments" element={<Departments />} />
           <Route path="/admin/reports" element={<Reports />} />

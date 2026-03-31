@@ -14,6 +14,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  residentId: {
+    type: String,
+    unique: true,
+  },
+  department: {
+    type: String,
+    default: "",
+  },
   role: {
     type: String,
     enum: ["Citizen", "Admin", "Officer"],

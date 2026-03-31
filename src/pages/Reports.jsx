@@ -1,9 +1,14 @@
 import React from 'react';
 import Layout from '../components/Layout';
-import { adminLinks, adminUser } from './AdminDashboard';
+import { adminLinks } from './AdminDashboard';
 import { AreaChart, Area, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function Reports() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+        window.location.href = '/login';
+        return null;
+    }
     const timeData = [{ name: 'Jan', value: 400 }, { name: 'Feb', value: 300 }, { name: 'Mar', value: 550 }, { name: 'Apr', value: 480 }];
     const pieData = [{ name: 'Electricity', value: 45 }, { name: 'Water', value: 25 }, { name: 'Sanitation', value: 20 }, { name: 'Roads', value: 10 }];
     const barData = [{ name: 'Electricity', time: 24 }, { name: 'Water', time: 36 }, { name: 'Sanitation', time: 18 }, { name: 'Roads', time: 48 }];
@@ -11,7 +16,7 @@ export default function Reports() {
     const COLORS = ['#216669', '#10b981', '#f59e0b', '#ef4444'];
 
     return (
-        <Layout links={adminLinks} user={adminUser} mainStyle={{ padding: '2rem 3rem' }}>
+        <Layout links={adminLinks} user={user} mainStyle={{ padding: '2rem 3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>System Reports</h1>

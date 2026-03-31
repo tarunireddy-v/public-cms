@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Layout from '../components/Layout';
 import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
-
-const OFFICER_DEPARTMENT = 'Electricity';
 
 function downloadComplaintsCsv(complaintRows) {
     const header = 'ID,Title,Department,Status,Date';
@@ -32,11 +30,16 @@ export const officerLinks = [
     { path: '/officer/analytics', label: 'Analytics', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> }
 ];
 
-export const officerUser = { name: 'Officer Wilson', idText: 'Dept: Electricity', avatar: 'https://ui-avatars.com/api/?name=Officer+Wilson&background=216669&color=fff' };
-
 export default function OfficerDashboard() {
-    const { getComplaintsByDepartment, filterComplaintsBySearch } = useComplaints();
-    const deptComplaints = filterComplaintsBySearch(getComplaintsByDepartment(OFFICER_DEPARTMENT));
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+        window.location.href = '/login';
+        return null;
+    }
+    const department = user.department || '';
+    const { getComplaintsByDepartment, filterComplaintsBySearch, updateComplaintStatus } = useComplaints();
+    const [successMessage, setSuccessMessage] = useState('');
+    const deptComplaints = filterComplaintsBySearch(getComplaintsByDepartment(department));
     
     const pending = deptComplaints.filter(c => c.status === 'Submitted' || c.status === 'Assigned');
     const inProgress = deptComplaints.filter(c => c.status === 'In Progress');
@@ -46,12 +49,22 @@ export default function OfficerDashboard() {
         downloadComplaintsCsv([...pending, ...inProgress]);
     };
 
+    const handleUpdate = async (id, status, priority, remarks) => {
+        await updateComplaintStatus(id, status, priority, remarks);
+        setSuccessMessage('Complaint updated successfully');
+    };
+
     return (
-        <Layout links={officerLinks} user={officerUser} mainStyle={{ padding: '2rem 3rem' }}>
+        <Layout links={officerLinks} user={user} mainStyle={{ padding: '2rem 3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>Overview</h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Summary of your department's current workload.</p>
+                    {user.role === 'Officer' && (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                            Department: {user.department || '-'}
+                        </p>
+                    )}
                 </div>
                 <div>
                     <select className="form-control" style={{ fontSize: '0.75rem', padding: '0.25rem 2rem 0.25rem 0.75rem', backgroundColor: 'white' }}>
@@ -60,6 +73,11 @@ export default function OfficerDashboard() {
                     </select>
                 </div>
             </div>
+            {successMessage && (
+                <p style={{ color: 'var(--status-resolved)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                    {successMessage}
+                </p>
+            )}
 
             <div className="grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2rem' }}>
                 <div className="stat-card" style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '1.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', minHeight: '120px' }}>
@@ -94,7 +112,7 @@ export default function OfficerDashboard() {
                     </div>
                 </div>
                 <div style={{ margin: '-2rem', marginTop: '0' }}>
-                    <ComplaintTable complaints={[...pending, ...inProgress]} isOfficer={true} />
+                    <ComplaintTable complaints={[...pending, ...inProgress]} isOfficer={true} onUpdate={handleUpdate} />
                 </div>
             </div>
         </Layout>

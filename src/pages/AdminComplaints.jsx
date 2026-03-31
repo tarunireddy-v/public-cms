@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
-import { adminLinks, adminUser } from './AdminDashboard';
+import { adminLinks } from './AdminDashboard';
 import { useComplaints } from '../context/ComplaintContext';
 import ComplaintTable from '../components/ComplaintTable';
 
 export default function AdminComplaints() {
-    const { complaints, filterComplaintsBySearch, searchQuery, setSearchQuery } = useComplaints();
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+        window.location.href = '/login';
+        return null;
+    }
+    const { complaints, filterComplaintsBySearch, searchQuery, setSearchQuery, fetchComplaints } = useComplaints();
     const [filter, setFilter] = useState('All');
+
+    useEffect(() => {
+        fetchComplaints();
+    }, [fetchComplaints]);
 
     const searched = filterComplaintsBySearch(complaints);
     const filtered = searched.filter((c) => {
@@ -15,7 +24,7 @@ export default function AdminComplaints() {
     });
 
     return (
-        <Layout links={adminLinks} user={adminUser} mainStyle={{ padding: '2rem 3rem' }}>
+        <Layout links={adminLinks} user={user} mainStyle={{ padding: '2rem 3rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>All Complaints</h1>

@@ -104,6 +104,11 @@ export default function ComplaintTable({ complaints, showCitizen = false, isOffi
                                                     <div>
                                                         <h4 style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Detailed Description</h4>
                                                         <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.6 }}>{c.description}</p>
+                                                        {!!c.remarks && (
+                                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                                                <strong>Remarks:</strong> {c.remarks}
+                                                            </p>
+                                                        )}
                                                         
                                                         <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
                                                             <div>

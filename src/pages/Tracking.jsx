@@ -1,21 +1,44 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import Layout from '../components/Layout';
 import { citizenLinks } from './CitizenDashboard';
-import { officerLinks, officerUser } from './OfficerDashboard';
-import { adminLinks, adminUser } from './AdminDashboard';
+import { officerLinks } from './OfficerDashboard';
+import { adminLinks } from './AdminDashboard';
 import { useComplaints } from '../context/ComplaintContext';
 import { useParams, Link } from 'react-router-dom';
 
 export default function Tracking({ role = 'citizen' }) {
+    const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!currentUser) {
+        window.location.href = '/login';
+        return null;
+    }
     const { id } = useParams();
-    const { getComplaintById } = useComplaints();
+    const { getComplaintById, updateComplaintStatus } = useComplaints();
     const complaint = getComplaintById(id);
 
     if (!complaint) return <Layout links={citizenLinks}><div className="p-4 text-center">Not found</div></Layout>;
 
     const statusFlow = ['Submitted', 'Assigned', 'In Progress', 'Resolved'];
     const currentStatusIndex = statusFlow.indexOf(complaint.status);
+    const [editStatus, setEditStatus] = useState(complaint.status || 'Submitted');
+    const [editPriority, setEditPriority] = useState(complaint.priority || 'Medium');
+    const [editRemarks, setEditRemarks] = useState(complaint.remarks || '');
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateMessage, setUpdateMessage] = useState('');
+    const createdDate = complaint?.createdAt
+        ? new Date(complaint.createdAt)
+        : new Date();
+    const expectedDateObj = new Date(createdDate);
+    const daysToResolve =
+        complaint.priority === "High" ? 2 :
+        complaint.priority === "Medium" ? 3 : 5;
+    expectedDateObj.setDate(expectedDateObj.getDate() + daysToResolve);
+    const expectedDate = expectedDateObj.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+    });
 
     let links = citizenLinks;
     let user = null;
@@ -24,14 +47,16 @@ export default function Tracking({ role = 'citizen' }) {
 
     if (role === 'officer') {
         links = officerLinks;
-        user = officerUser;
+        user = currentUser;
         mainStyle = { padding: '2rem 3rem' };
         breadcrumbHome = "/officer";
     } else if (role === 'admin') {
         links = adminLinks;
-        user = adminUser;
+        user = currentUser;
         mainStyle = { padding: '2rem 3rem' };
         breadcrumbHome = "/admin";
+    } else {
+        user = currentUser;
     }
 
     const handleDownloadPdf = () => {
@@ -63,6 +88,21 @@ export default function Tracking({ role = 'citizen' }) {
             await navigator.clipboard.writeText(text);
         } catch (_err) {
             window.prompt('Copy this text:', text);
+        }
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        if (role === 'citizen') return;
+        setUpdateMessage('');
+        setIsUpdating(true);
+        try {
+            await updateComplaintStatus(complaint.id, editStatus, editPriority, editRemarks);
+            setUpdateMessage('Complaint updated successfully');
+        } catch (_error) {
+            setUpdateMessage('Failed to update complaint');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -98,23 +138,28 @@ export default function Tracking({ role = 'citizen' }) {
                     <div>
                         {statusFlow.map((status, index) => {
                             const log = complaint.timeline.find(l => l.status === status);
-                            const isActive = !!log;
-                            const isCurrent = index === currentStatusIndex;
+                            const isCurrent = status === complaint.status;
+                            const isCompleted = currentStatusIndex >= 0 && index < currentStatusIndex;
+                            const isActive = isCurrent || isCompleted;
 
                             return (
-                                <div key={status} style={{ position: 'relative', paddingLeft: '2.5rem', paddingBottom: index === statusFlow.length - 1 ? 0 : '2rem' }}>
+                                <div
+                                    key={status}
+                                    className={`timeline-step ${isCurrent ? 'active' : isCompleted ? 'completed' : ''}`}
+                                    style={{ position: 'relative', paddingLeft: '2.5rem', paddingBottom: index === statusFlow.length - 1 ? 0 : '2rem', borderRadius: '8px', paddingTop: '0.125rem', paddingRight: '0.5rem' }}
+                                >
                                     {index !== statusFlow.length - 1 && (
                                         <div style={{ position: 'absolute', left: '0.6rem', top: '1.5rem', bottom: '-0.5rem', width: '2px', backgroundColor: isActive ? 'var(--primary)' : 'var(--border-color)' }}></div>
                                     )}
                                     <div style={{ position: 'absolute', left: 0, top: '0.125rem', width: '1.25rem', height: '1.25rem', borderRadius: '50%', color: 'white', backgroundColor: isActive ? 'var(--primary)' : '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-                                        {isActive ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'white' }}></div>}
+                                        {(isCompleted || isCurrent) ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg> : <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'white' }}></div>}
                                     </div>
                                     <div style={{ opacity: 1, fontSize: '0.875rem' }}>
                                         <div style={{ fontWeight: 600, marginBottom: '0.25rem', color: isActive ? 'var(--text-primary)' : 'var(--text-muted)' }}>{status}</div>
                                         {log ? (
                                             <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginBottom: '0.5rem' }}>{log.date}<br/>{log.note && status === 'Assigned' ? 'Urban Maintenance Dept.' : ''}</div>
                                         ) : (
-                                            status === 'Resolved' && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Expected: Oct 15</div>
+                                            status === 'Resolved' && <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Expected: {expectedDate}</div>
                                         )}
                                         {isCurrent && status === 'In Progress' && <span style={{ fontSize: '0.65rem', background: 'rgba(245, 158, 11, 0.1)', color: 'var(--status-progress)', padding: '0.125rem 0.5rem', borderRadius: '4px', fontWeight: 700, marginTop: '0.25rem', display: 'inline-block' }}>ON SITE NOW</span>}
                                     </div>
@@ -183,6 +228,56 @@ export default function Tracking({ role = 'citizen' }) {
                             </div>
                         </div>
                     </div>
+
+                    {(role === 'officer' || role === 'admin') && (
+                        <div className="update-box">
+                            <h4 style={{ fontSize: '0.875rem', marginBottom: '1rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>
+                                {role === 'officer' ? 'Update Complaint' : 'Status & Remarks'}
+                            </h4>
+
+                            {role === 'admin' && (
+                                <span className="admin-badge">Admin Override</span>
+                            )}
+
+                            <form onSubmit={handleUpdate}>
+                                <div className="form-group">
+                                    <label className="form-label">Status</label>
+                                    <select className="form-control" value={editStatus} onChange={(e) => setEditStatus(e.target.value)}>
+                                        {statusFlow.map((s) => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Priority</label>
+                                    <select className="form-control" value={editPriority} onChange={(e) => setEditPriority(e.target.value)}>
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Remarks</label>
+                                    <textarea
+                                        className="form-control"
+                                        value={editRemarks}
+                                        onChange={(e) => setEditRemarks(e.target.value)}
+                                        placeholder="Add remarks..."
+                                        style={{ minHeight: '100px' }}
+                                    />
+                                </div>
+                                <button type="submit" className="btn btn-primary" disabled={isUpdating} style={{ marginTop: '10px' }}>
+                                    {isUpdating ? 'Updating...' : 'Update'}
+                                </button>
+                            </form>
+
+                            {updateMessage && (
+                                <p style={{ marginTop: '0.75rem', color: updateMessage.includes('successfully') ? 'var(--status-resolved)' : 'var(--status-error)', fontSize: '0.875rem' }}>
+                                    {updateMessage}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     <div style={{ marginTop: '2rem' }}>
                         <h4 style={{ fontSize: '0.875rem', marginBottom: '1rem', textTransform: 'uppercase', color: 'var(--text-secondary)', letterSpacing: '0.05em' }}>Internal Log</h4>

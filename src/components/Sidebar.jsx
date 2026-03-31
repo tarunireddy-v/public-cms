@@ -1,10 +1,18 @@
 import React from 'react';
-import { NavLink, useNavigate, Link } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 export default function Sidebar({ links, user }) {
   const navigate = useNavigate();
 
+  const getIdLabel = () => {
+    if (user?.role === 'Admin') return 'Admin ID';
+    if (user?.role === 'Officer') return 'Officer ID';
+    return 'Resident ID';
+  };
+
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
@@ -39,8 +47,13 @@ export default function Sidebar({ links, user }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
           <img src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=216669&color=fff"} style={{ width: '32px', height: '32px', borderRadius: '50%' }} alt="Avatar" />
           <div style={{ fontSize: '0.75rem' }}>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user?.name || 'Marcus Johnson'}</div>
-            <div style={{ color: 'var(--text-muted)' }}>{user?.idText || 'Resident ID: 8821'}</div>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user?.name}</div>
+            <div style={{ color: 'var(--text-muted)' }}>
+              {getIdLabel()}: {user?.residentId}
+            </div>
+            {user?.role === 'Officer' && user?.department && (
+              <div style={{ color: 'var(--text-muted)' }}>Department: {user.department}</div>
+            )}
           </div>
         </div>
       </div>

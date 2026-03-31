@@ -6,7 +6,6 @@ export default function Login() {
     const navigate = useNavigate();
     const [username, setUsername] = useState('name@agency.gov');
     const [password, setPassword] = useState('password');
-    const [role, setRole] = useState('Citizen');
     const [error, setError] = useState('');
 
     const handleLogin = async (e) => {
@@ -16,12 +15,13 @@ export default function Login() {
         try {
             const response = await api.login({ email: username, password });
             localStorage.setItem('token', response.token);
-            localStorage.setItem('user', JSON.stringify(response.user));
+            const user = response?.data?.user || response?.user || {};
+            localStorage.setItem('user', JSON.stringify(user));
 
-            const backendRole = response.user?.role;
+            const backendRole = user?.role;
             if (backendRole === 'Citizen') navigate('/dashboard');
-            else if (backendRole === 'Officer') navigate('/officer');
-            else if (backendRole === 'Admin') navigate('/admin');
+            else if (backendRole === 'Officer') navigate('/officer-dashboard');
+            else if (backendRole === 'Admin') navigate('/admin-dashboard');
             else navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Login failed');
@@ -84,15 +84,6 @@ export default function Login() {
                             <input type="password" className="form-control" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius)', border: '1px solid var(--border-color)', fontSize: '0.875rem' }} value={password} onChange={e => setPassword(e.target.value)} required />
                         </div>
 
-                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Portal Role</label>
-                            <select className="form-control" style={{ width: '100%', padding: '0.75rem 1rem', borderRadius: 'var(--radius)', border: '1px solid var(--border-color)', fontSize: '0.875rem', backgroundColor: 'white' }} value={role} onChange={e => setRole(e.target.value)} required>
-                                <option value="Citizen">Citizen</option>
-                                <option value="Department Officer">Department Officer</option>
-                                <option value="Admin">Admin</option>
-                            </select>
-                        </div>
-
                         <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', marginTop: '1rem', fontSize: '1rem' }}>Login to Portal →</button>
                         {error && (
                             <p style={{ marginTop: '0.75rem', color: 'var(--status-error)', fontSize: '0.875rem' }}>{error}</p>
@@ -100,12 +91,9 @@ export default function Login() {
                     </form>
 
                     <div style={{ marginTop: '2rem', textAlign: 'center', paddingTop: '2rem', borderTop: '1px solid var(--border-color)' }}>
-                        <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Quick Demo Access</span>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '1rem' }}>
-                            <button onClick={() => setRole('Citizen')} className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: 'white' }}>Citizen</button>
-                            <button onClick={() => setRole('Department Officer')} className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: 'white' }}>Officer</button>
-                            <button onClick={() => setRole('Admin')} className="btn btn-outline" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', backgroundColor: 'white' }}>Admin</button>
-                        </div>
+                        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                            Don&apos;t have an account? <Link to="/signup" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Sign up</Link>
+                        </p>
                     </div>
                 </div>
             </div>

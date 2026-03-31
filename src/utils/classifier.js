@@ -1,10 +1,13 @@
 // Rule-based classifier for Complaint Assignment
 const departments = [
-    'Electricity Department',
-    'Water Supply Department',
-    'Sanitation Department',
-    'Roads & Infrastructure',
-    'Public Safety'
+    'Electricity',
+    'Water',
+    'Sanitation',
+    'Roads',
+    'Public Safety',
+    'Animal Control',
+    'Noise & Public Disturbance',
+    'Drainage & Sewage'
 ];
 
 const classifyComplaint = (title, description) => {

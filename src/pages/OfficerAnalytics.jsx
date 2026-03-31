@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '../components/Layout';
-import { officerLinks, officerUser } from './OfficerDashboard';
+import { officerLinks } from './OfficerDashboard';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const data = [
@@ -14,8 +14,14 @@ const data = [
 ];
 
 export default function OfficerAnalytics() {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
+        window.location.href = '/login';
+        return null;
+    }
+
     return (
-        <Layout links={officerLinks} user={officerUser} mainStyle={{ padding: '2rem 3rem' }}>
+        <Layout links={officerLinks} user={user} mainStyle={{ padding: '2rem 3rem' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.25rem' }}>Department Analytics</h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '2rem' }}>Performance metrics and resolution trends.</p>
             

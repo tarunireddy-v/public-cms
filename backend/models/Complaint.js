@@ -27,6 +27,16 @@ const complaintSchema = new mongoose.Schema(
       default: "Pending",
       trim: true,
     },
+    priority: {
+      type: String,
+      default: "Medium",
+      trim: true,
+    },
+    remarks: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
