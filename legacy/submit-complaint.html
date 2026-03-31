@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Complaint - Smart Public</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        .page-header {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 0.875rem;
+        }
+        .page-header a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .page-header a.active {
+            color: var(--primary);
+        }
+        
+        .submit-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .header-card {
+            background-color: rgba(33, 102, 105, 0.04);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .header-card h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .header-card p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            max-width: 400px;
+        }
+
+        .form-section {
+            background-color: var(--surface);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .section-divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .section-divider::before {
+            content: '';
+            width: 24px;
+            height: 1px;
+            background-color: var(--primary);
+            margin-right: 0.75rem;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 250px;
+            background-color: #e5e7eb;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" opacity="0.1"><line x1="0" y1="0" x2="100%" y2="100%" stroke="black" stroke-width="2"/><line x1="100%" y1="0" x2="0" y2="100%" stroke="black" stroke-width="2"/></svg>');
+            border-radius: var(--radius);
+            margin-top: 1rem;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .map-marker {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: absolute;
+        }
+        .map-marker::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius);
+            padding: 3rem 2rem;
+            text-align: center;
+            background-color: rgba(0,0,0,0.01);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .dropzone:hover {
+            border-color: var(--primary);
+            background-color: rgba(33, 102, 105, 0.02);
+        }
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body style="background-color: var(--bg-color);">
+
+    <nav class="navbar" style="padding-left: 2rem; padding-right: 2rem;">
+        <div style="display: flex; align-items: center; gap: 4rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--primary); font-size: 1.25rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect>
+                </svg>
+                SmartCity <span style="font-weight: 400; font-size: 0.875rem; color: var(--text-secondary); margin-left: -4px;">Citizen Portal</span>
+            </div>
+            
+            <div style="position: relative; width: 400px; display: none;" id="searchBar">
+            </div>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="position: relative; width: 300px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 10px; color: var(--text-muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" class="form-control" style="width: 100%; padding-left: 2.5rem; background-color: var(--bg-color); border: none;" placeholder="Search complaints, tracking IDs...">
+            </div>
+            <button class="btn btn-ghost" style="padding: 0.5rem;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-muted);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg></button>
+            <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-light); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer;">U</div>
+        </div>
+    </nav>
+
+    <div class="dashboard-layout" style="min-height: 100vh;">
+        <aside class="sidebar">
+            <div class="sidebar-nav">
+                <a href="citizen-dashboard.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Dashboard</a>
+                <a href="my-complaints.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> My Complaints</a>
+                <a href="submit-complaint.html" class="sidebar-link active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Submit New</a>
+            </div>
+
+            <div style="position: absolute; bottom: 1.5rem; left: 1.5rem; right: 1.5rem;">
+                <button class="btn btn-outline w-full" data-action="logout" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Logout</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="submit-container" style="margin: 2rem auto;">
+        
+        <div class="header-card">
+            <div>
+                <h1>Submit New Complaint</h1>
+                <p>Your report helps us build a better city. Please provide accurate details to ensure a swift resolution by the respective department.</p>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background-color: white; color: var(--primary); padding: 0.5rem 1rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); text-transform: uppercase;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Secure Submission
+            </div>
+        </div>
+
+        <form id="complaintForm" class="form-section">
+            <div class="section-divider" style="margin-top: 0;">Basic Information</div>
+            
+            <div class="form-group">
+                <label class="form-label">Complaint Title</label>
+                <input type="text" id="title" class="form-control" placeholder="e.g., Pothole on Maple Street, Broken Streetlight near Central Park" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Detailed Description</label>
+                <textarea id="description" class="form-control" placeholder="Describe the issue in detail. Include any specific landmarks or relevant observations..." required></textarea>
+            </div>
+
+            <div class="section-divider">Categorization & Location</div>
+            
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Target Department</label>
+                    <div style="position:relative;">
+                        <select id="department" class="form-control" style="width: 100%; appearance: none;">
+                            <option value="auto">Auto-detecting based on keywords...</option>
+                        </select>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; right: 12px; top: 12px; pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem;">Our AI automatically suggests the department based on your title.</p>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Precise Location</label>
+                    <div style="position: relative;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 12px; color: var(--primary);"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        <input type="text" id="location" class="form-control" style="width: 100%; padding-left: 2.5rem;" placeholder="Search address or pick on map" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-placeholder">
+                <div class="map-marker"></div>
+                <button type="button" class="btn btn-outline" style="position: absolute; bottom: 1rem; right: 1rem; background: white; font-size: 0.75rem; padding: 0.25rem 0.75rem;">FULLSCREEN MAP</button>
+            </div>
+
+            <div class="section-divider">Visual Evidence</div>
+            
+            <div class="dropzone" id="dropzone">
+                <div style="width: 48px; height: 48px; background-color: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <h4 style="font-size: 1rem; margin-bottom: 0.25rem;">Drag and drop photos here</h4>
+                <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.5rem;">PNG, JPG or JPEG (Max. 10MB per file)</p>
+                <button type="button" class="btn btn-outline">BROWSE FILES</button>
+            </div>
+
+            <div class="form-footer">
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; max-width: 400px; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;">
+                    <input type="checkbox" style="margin-top: 0.25rem;">
+                    Submit this complaint anonymously. Your identity will be hidden from the public but visible to administrators for follow-up.
+                </label>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="citizen-dashboard.html" class="btn btn-ghost" style="font-weight: 700;">CANCEL</a>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem;">SUBMIT COMPLAINT</button>
+                </div>
+            </div>
+        </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/store.js"></script>
+    <script src="js/classifier.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const session = auth.getSession();
+            // Optional: require citizen role if desired for full auth strictness
+
+            // Populate departments in select alongside auto
+            const deptSelect = document.getElementById('department');
+            classifier.departments.forEach(dept => {
+                const opt = document.createElement('option');
+                opt.value = dept;
+                opt.textContent = dept;
+                deptSelect.appendChild(opt);
+            });
+
+            const titleInput = document.getElementById('title');
+            const descInput = document.getElementById('description');
+            
+            // Auto-classification hint
+            const autoClassifyHint = () => {
+                if(deptSelect.value === 'auto') {
+                    const detected = classifier.classify(titleInput.value, descInput.value);
+                    deptSelect.options[0].textContent = `Auto-detecting: ${detected}`;
+                }
+            };
+
+            titleInput.addEventListener('input', autoClassifyHint);
+            descInput.addEventListener('input', autoClassifyHint);
+
+            document.getElementById('complaintForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const title = titleInput.value;
+                const description = descInput.value;
+                let department = deptSelect.value;
+                const location = document.getElementById('location').value;
+
+                if (department === 'auto') {
+                    department = classifier.classify(title, description);
+                }
+
+                const newRef = 'REF-' + Math.floor(10000 + Math.random() * 90000);
+                
+                const now = new Date();
+                const dateStr = `${now.toLocaleString('en-US', { month: 'short' })} ${now.getDate()}, ${now.getFullYear()}`;
+                const timeStr = `${dateStr} • ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+                const complaint = {
+                    id: newRef,
+                    title: title,
+                    description: description,
+                    location: location,
+                    // Simple category based on first word of department for UI shorthand
+                    category: department.split(' ')[0] + ' Issue', 
+                    department: department,
+                    priority: 'Medium', // default
+                    status: 'Submitted',
+                    date: dateStr,
+                    citizenId: session ? session.username : 'user1',
+                    evidence: null,
+                    timeline: [
+                        { status: 'Submitted', date: timeStr, note: 'Complaint officially submitted by citizen.' }
+                    ]
+                };
+
+                store.addComplaint(complaint);
+                
+                // Show tracking success
+                window.location.href = `tracking.html?id=${newRef}`;
+            });
+        });
+    </script>
+</body>
+</html>

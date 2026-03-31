@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
+    <style>
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+        .stat-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .trend-up {
+            font-size: 0.75rem;
+            color: var(--status-resolved);
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 0.125rem 0.5rem;
+            border-radius: 999px;
+        }
+        .trend-down {
+            font-size: 0.75rem;
+            color: var(--status-error);
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 0.125rem 0.5rem;
+            border-radius: 999px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-placeholder {
+            width: 100%;
+            height: 300px;
+            background: repeating-linear-gradient(
+                -45deg,
+                rgba(33, 102, 105, 0.05),
+                rgba(33, 102, 105, 0.05) 10px,
+                transparent 10px,
+                transparent 20px
+            );
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            border: 1px dashed var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-layout" style="min-height: 100vh;">
+        <!-- Admin Sidebar -->
+        <aside class="sidebar">
+            <div style="padding: 0 1.5rem 2rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 700; color: var(--primary); font-size: 1.125rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                SmartPublic <span style="font-weight: 400; font-size: 0.75rem; color: var(--text-secondary); margin-left: -4px;">ADMIN PORTAL</span>
+            </div>
+
+            <div class="sidebar-nav">
+                <a href="admin-dashboard.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg> Dashboard</a>
+                <a href="complaints.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Complaints</a>
+                <a href="departments.html" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Departments</a>
+                <a href="#" class="sidebar-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Users</a>
+                <a href="reports.html" class="sidebar-link active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> Reports</a>
+            </div>
+
+            <div style="position: absolute; bottom: 1.5rem; left: 1.5rem; right: 1.5rem;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <button class="btn btn-ghost w-full" data-action="logout" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-align: center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Logout</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" style="padding: 2rem 3rem;">
+            
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 1.75rem; margin-bottom: 0.25rem;">Analytics & Reports</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem;">Deep dive into platform performance and resolution times.</p>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <select class="form-control" style="font-size: 0.875rem; padding: 0.5rem 2.5rem 0.5rem 1rem;">
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                        <option>Year to Date</option>
+                    </select>
+                    <button class="btn btn-primary" style="background-color: var(--primary);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.5rem;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export PDF</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(33, 102, 105, 0.1); color: var(--primary);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+                        <div class="trend-up">+12%</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="admin-total-complaints">0</div>
+                        <div class="stat-title">Total Complaints</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--status-progress);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                        <div class="trend-down">-1%</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="admin-pending-cases">0</div>
+                        <div class="stat-title">Pending Cases</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--status-resolved);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+                        <div class="trend-up">+18%</div>
+                    </div>
+                    <div>
+                        <div class="stat-value" id="admin-resolved-cases">0</div>
+                        <div class="stat-title">Resolved Cases</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--status-submitted);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                        <div class="trend-down">-4%</div>
+                    </div>
+                    <div>
+                        <div class="stat-value">1.8 <span style="font-size: 1.25rem; font-weight: 500;">Days</span></div>
+                        <div class="stat-title">Avg. Response Time</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="chart-card">
+                    <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Complaints by Status</h3>
+                    <div class="chart-placeholder">
+                        Pie Chart Placeholder
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Resolution Time (Days)</h3>
+                    <div class="chart-placeholder">
+                        Bar Chart Placeholder
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3 style="font-size: 1rem; margin-bottom: 1.5rem;">Geographic Distribution</h3>
+                <div class="chart-placeholder" style="height: 400px;">
+                    Map / Heatmap Placeholder
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="js/store.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            auth.requireRole(['Admin']);
+            
+            const complaints = store.getComplaints();
+            const total = complaints.length;
+            const pending = complaints.filter(c => ['Submitted', 'Assigned', 'In Progress'].includes(c.status)).length;
+            const resolved = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
+
+            document.getElementById('admin-total-complaints').textContent = total;
+            document.getElementById('admin-pending-cases').textContent = pending;
+            document.getElementById('admin-resolved-cases').textContent = resolved;
+        });
+    </script>
+</body>
+</html>
